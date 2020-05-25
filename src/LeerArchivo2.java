@@ -3,35 +3,74 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class LeerArchivos.
  *
  */
 public class LeerArchivo2 {
-	
+
+	/**
+	 * Nombre del archivo nuevo de ICE
+	 */
+	private String nombreArchivoNuevoICE;
+
+	/**
+	 * Nombre del archivo nuevo de BKL.
+	 */
+	private String nombreArchivoNuevoBKL;
+
+	/**
+	 * Almacena todos los registros existentes en el archivo que sera leido.
+	 */
+	private List<String> registrosICE;
+
+	/**
+	 * Almacena todos los registros existentes en el archivo que sera leido.
+	 */
+	private List<String> registrosBKL;
+
+	/**
+	 * Variable para crear archivo.
+	 */
+	private PrintWriter pw;
+
+	/**
+	 * Constante.
+	 */
+	private final String ICE = "ICE";
+
+	/**
+	 * Costante.
+	 */
+	private final String BKL = "BKL";
+
 	/**
 	 * Variable de cabecera Importe Sumatoria Moneda USD del archivo que se lee.
 	 */
 	private String cabeceraImporteSumatoriaMonedaUSD;
-	
+
 	/**
 	 * Variable de cabecera Importe Sumatoria Moneda MXP del archivo que se lee.
 	 */
 	private String cabeceraImporteSumatoriaMonedaMXP;
-	
+
 	/**
 	 * Variable de cabecera de Total de Registro del archivo que se lee.
 	 */
 	private String cabeceraTotalRegistros;
-	
+
 	/**
 	 * Variable de cabecera Fecha Pago del archivo que se lee.
 	 */
 	private String cabeceraFechaPago;
-	
+
 	/**
-	 * Variable que sirve de auxiliar, cuando la variable cabeceraFechaPago tenga valor esta variable cambiara el valor a true.
+	 * Variable que sirve de auxiliar, cuando la variable cabeceraFechaPago tenga
+	 * valor esta variable cambiara el valor a true.
 	 */
 	private Boolean auxCabeceraFechaPago = false;
 
@@ -41,14 +80,29 @@ public class LeerArchivo2 {
 	private String newFileICE;
 
 	/**
+	 * Variable que al crearse el nuevo archivo newFileIce cambiara el valor a true.
+	 */
+	private Boolean auxNewFileICE = false;
+
+	/**
 	 * Variable que almacenara la ruta del nuevo archivo creado del segundo sistema.
 	 */
-	private String newOtherSistem;
+	private String newFileBKL;
+
+	/**
+	 * Variable que al crearse el nuevo archivo newFileBKL cambiara el valor a true.
+	 */
+	private Boolean auxNewFileBKL = false;
 
 	/**
 	 * Variable que almacenara la ruta del archivo que se va a leer.
 	 */
 	private File lectureFile;
+
+	/**
+	 * Variable que almacenara linea por linea del archivo leido.
+	 */
+	private String linea;
 
 	/**
 	 * Contrucor por defecto. Se inizializa la variable.
@@ -64,8 +118,12 @@ public class LeerArchivo2 {
 	 */
 	public LeerArchivo2(String ruta) {
 		lectureFile = new File(ruta);
+		registrosICE = new ArrayList<>();
+		registrosBKL = new ArrayList<>();
+		nombreArchivoNuevoICE = "Nuevo Archivo ICE.txt";
+		nombreArchivoNuevoBKL = "Nuevo Archivo BKL.txt";
 	}
-	
+
 	/**
 	 * Metodo que lee un archivo.
 	 */
@@ -73,55 +131,120 @@ public class LeerArchivo2 {
 		try {
 			FileReader fr = new FileReader(lectureFile);
 			BufferedReader br = new BufferedReader(fr);
-			
-			String linea;
-			
-			//Lee linea por linea del archivo...
-			while((linea = br.readLine()) != null) {
-				System.out.println(linea);
-				
-				//Comprueba si la variable es false, si cumple asigna valores a las variables de cabecera siguientes, e imprime los valores de las variables.
+
+			// Lee linea por linea del archivo...
+			while ((linea = br.readLine()) != null) {
+
+				// Comprueba si la variable es false, si cumple asigna valores a las variables
+				// de cabecera siguientes, e imprime los valores de las variables.
 				if (auxCabeceraFechaPago == false) {
-					//Asigna el valor a cabeceraFechaPago.
+					// Asigna el valor a cabeceraFechaPago.
 					cabeceraFechaPago = linea.substring(4, 12);
 					System.out.println("Cabecera Fecha Pago: " + cabeceraFechaPago);
-					
-					//Aseigna valor a cabeceraTotalRegistros.
+
+					// Aseigna valor a cabeceraTotalRegistros.
 					cabeceraTotalRegistros = linea.substring(12, 17);
 					System.out.println("Cabecera Total Registros: " + cabeceraTotalRegistros);
-					
-					//Aseigna valor a cabeceraImporteSumatoriaMonedaMXP.
+
+					// Aseigna valor a cabeceraImporteSumatoriaMonedaMXP.
 					cabeceraImporteSumatoriaMonedaMXP = linea.substring(17, 33);
 					System.out.println("Cabecera Importe Sumatoria Moneda MXP: " + cabeceraImporteSumatoriaMonedaMXP);
-					
-					//Asigna valor a cabeceraImporteSumatoriaMonedaUSD.
+
+					// Asigna valor a cabeceraImporteSumatoriaMonedaUSD.
 					cabeceraImporteSumatoriaMonedaUSD = linea.substring(37, 53);
-					System.out.println("Cabecera Importe Sumatoria Moneda USD: " + cabeceraImporteSumatoriaMonedaUSD);
-					
+					System.out.println(
+							"Cabecera Importe Sumatoria Moneda USD: " + cabeceraImporteSumatoriaMonedaUSD + "\n");
+
 					auxCabeceraFechaPago = true;
 				}
-				
-			}	
-			
-			//Se cierran los recursos que se utilizan.
+
+				if (linea.contains(ICE)) {
+					System.out.println("Si contiene la linea la palabra ICE");
+					registrosICE.add(linea);
+
+				} else if (linea.contains(BKL)) {
+					System.out.println("Si contienen la linea la palabra BKL");
+					registrosBKL.add(linea);
+				}
+
+				imprimirArchivoLeido();
+
+			}
+			// Se cierran los recursos que se utilizan.
 			br.close();
 			fr.close();
-			
+
+			System.out.println("Tamaño de registros de ICE: " + registrosICE.size());
+			System.out.println("Tamaño de registros de BKL: " + registrosBKL.size());
+
+			crearArchivoICE(cabeceraFechaPago, registrosICE.size(), registrosICE, nombreArchivoNuevoICE);
+			crearArchivoBKL(cabeceraFechaPago, registrosBKL.size(), registrosBKL, nombreArchivoNuevoBKL);
+
 		} catch (FileNotFoundException e) {
 			System.out.println("El archivo no pudo ser leido... " + e.getMessage());
 		} catch (IOException e) {
 			System.out.println("Ocurrió un error leyendo el archivo: " + e);
 		}
 	}
-	
+
+	/**
+	 * Metodo que crea un nuevo archivo de ICE.
+	 * 
+	 * @param valor
+	 * @return true o false si creo el archivo
+	 */
+	private boolean crearArchivoICE(String cabeceraFechaPago, Integer cabeceraTotalRegistrosICE,
+			List<String> registrosICE, String nombreArchivo) {
+
+		// Creara un nuevo archivo siempre y cuando el valor sea false.
+		if (auxNewFileICE == false) {
+			try {
+				pw = new PrintWriter(nombreArchivo);// Se crea el archivo con el nombre que lleva como parametro.
+				System.out.println("Archivo ICE creado correctamente...");
+			} catch (Exception e) {
+				System.out.println("Error al crear el archivo: " + e.getMessage());
+			}
+			auxNewFileICE = true;
+		}
+		pw.close();
+		return true;
+	}
+
+	/**
+	 * Metodo que crea un nuevo archivo de BKL.
+	 * 
+	 * @param valor
+	 * @return true o false si creo el archivo
+	 */
+	private boolean crearArchivoBKL(String cabeceraFechaPago, Integer cabeceraTotalRegistrosBKL,
+			List<String> registrosBKL, String nombreArchivo) {
+		// Creara un nuevo archivo siempre y cuando el valor sea false.
+		if (auxNewFileBKL == false) {
+			try {
+				pw = new PrintWriter(nombreArchivo);// Se crea el archivo con el nombre que lleva como parametro.
+				System.out.println("Archivo BKL creado correctamente...");
+			} catch (Exception e) {
+				System.out.println("Error al crear el archivo: " + e.getMessage());
+			}
+			auxNewFileICE = true;
+		}
+		pw.close();
+		return true;
+	}
+
+	private void imprimirArchivoLeido() {
+		System.out.println(linea);
+	}
+
 	/**
 	 * Metodo principal de la aplicación.
+	 * 
 	 * @param mac
 	 */
 	public static void main(String... mac) {
-		//Se utiliza el constructor con parametro.
+		// Se utiliza el constructor con parametro.
 		LeerArchivo2 object = new LeerArchivo2("c:\\pruebaJava\\prueba2.txt");
-		
+
 		object.readFile();
 	}
 
