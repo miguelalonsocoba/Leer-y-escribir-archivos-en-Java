@@ -14,6 +14,31 @@ import java.util.List;
 public class LeerArchivo2 {
 
 	/**
+	 * Almacenara el total de registros de ICE.
+	 */
+	private Integer totalRegistrosICE;
+
+	/**
+	 * Representa el monto total de moneda Extranjera.
+	 */
+	private Long montoTotalUSD;
+
+	/**
+	 * Representa el monto total de moneda nacional.
+	 */
+	private Long montoTotalMXP;
+
+	/**
+	 * Lista que almacenara los montos de moneda nacional.
+	 */
+	private List<Long> sumatoriaMontoMXP;
+
+	/**
+	 * Lista que almacenara los montos de moneda extranjera.
+	 */
+	private List<Long> sumatoriaMontoExt;
+
+	/**
 	 * Nombre del archivo nuevo de ICE
 	 */
 	private String nombreArchivoNuevoICE;
@@ -72,7 +97,7 @@ public class LeerArchivo2 {
 	 * Variable que sirve de auxiliar, cuando la variable cabeceraFechaPago tenga
 	 * valor esta variable cambiara el valor a true.
 	 */
-	private Boolean auxCabeceraFechaPago = false;
+	private Boolean auxCabeceraFechaPago;
 
 	/**
 	 * Variable que almacenara la ruta del nuevo archivo ICE creado
@@ -82,7 +107,7 @@ public class LeerArchivo2 {
 	/**
 	 * Variable que al crearse el nuevo archivo newFileIce cambiara el valor a true.
 	 */
-	private Boolean auxNewFileICE = false;
+	private Boolean auxNewFileICE;
 
 	/**
 	 * Variable que almacenara la ruta del nuevo archivo creado del segundo sistema.
@@ -92,7 +117,7 @@ public class LeerArchivo2 {
 	/**
 	 * Variable que al crearse el nuevo archivo newFileBKL cambiara el valor a true.
 	 */
-	private Boolean auxNewFileBKL = false;
+	private Boolean auxNewFileBKL;
 
 	/**
 	 * Variable que almacenara la ruta del archivo que se va a leer.
@@ -122,6 +147,14 @@ public class LeerArchivo2 {
 		registrosBKL = new ArrayList<>();
 		nombreArchivoNuevoICE = "Nuevo Archivo ICE.txt";
 		nombreArchivoNuevoBKL = "Nuevo Archivo BKL.txt";
+		sumatoriaMontoMXP = new ArrayList<>();
+		sumatoriaMontoExt = new ArrayList<>();
+		montoTotalMXP = 0L;
+		montoTotalUSD = 0L;
+		totalRegistrosICE = 0;
+		auxCabeceraFechaPago = false;
+		auxNewFileICE = false;
+		auxNewFileBKL = false;
 	}
 
 	/**
@@ -177,8 +210,8 @@ public class LeerArchivo2 {
 			System.out.println("Tamaño de registros de ICE: " + registrosICE.size());
 			System.out.println("Tamaño de registros de BKL: " + registrosBKL.size());
 
-			crearArchivoICE(cabeceraFechaPago, registrosICE.size(), registrosICE, nombreArchivoNuevoICE);
-			crearArchivoBKL(cabeceraFechaPago, registrosBKL.size(), registrosBKL, nombreArchivoNuevoBKL);
+			crearArchivoICE(cabeceraFechaPago, registrosICE, nombreArchivoNuevoICE);
+//			crearArchivoBKL(cabeceraFechaPago, registrosBKL.size(), registrosBKL, nombreArchivoNuevoBKL);
 
 		} catch (FileNotFoundException e) {
 			System.out.println("El archivo no pudo ser leido... " + e.getMessage());
@@ -188,18 +221,40 @@ public class LeerArchivo2 {
 	}
 
 	/**
+	 * Imprime el archivo.
+	 */
+	private void imprimirArchivoLeido() {
+		System.out.println(linea);
+	}
+
+	/**
 	 * Metodo que crea un nuevo archivo de ICE.
 	 * 
 	 * @param valor
 	 * @return true o false si creo el archivo
 	 */
-	private boolean crearArchivoICE(String cabeceraFechaPago, Integer cabeceraTotalRegistrosICE,
-			List<String> registrosICE, String nombreArchivo) {
+	private boolean crearArchivoICE(String cabeceraFechaPago, List<String> registrosICE, String nombreArchivo) {
 
 		// Creara un nuevo archivo siempre y cuando el valor sea false.
 		if (auxNewFileICE == false) {
 			try {
 				pw = new PrintWriter(nombreArchivo);// Se crea el archivo con el nombre que lleva como parametro.
+				identificarTipoMonto(registrosICE);
+				montoTotalMXP = sumaMonto(sumatoriaMontoMXP);
+				montoTotalUSD = sumaMonto(sumatoriaMontoExt);
+				String registroTotalesICE = establecerTotalRegistrosICE(registrosICE.size());
+				String montoTotalNacional = establecerSumatoriaMonedaNacionalOExtranjera(montoTotalMXP);
+				String montoTotalExtranjero = establecerSumatoriaMonedaNacionalOExtranjera(montoTotalUSD);
+
+				System.out.println("Registros totales de ICE ......" + registroTotalesICE);
+				System.out.println("Monto Total Nacional: " + montoTotalNacional);
+				System.out.println("Monto Total Extranjero: " + montoTotalExtranjero);
+
+				pw.write("01".concat("   ").concat(cabeceraFechaPago).concat(registroTotalesICE)
+						.concat(montoTotalNacional).concat("MXP").concat(montoTotalExtranjero).concat("USD\n"));
+				for (String registro : registrosICE) {
+					pw.write(registro + "\n");
+				}
 				System.out.println("Archivo ICE creado correctamente...");
 			} catch (Exception e) {
 				System.out.println("Error al crear el archivo: " + e.getMessage());
@@ -209,6 +264,79 @@ public class LeerArchivo2 {
 		pw.close();
 		return true;
 	}
+	
+	/**
+	 * Identifica el tipo de monto entre moneda Nacional(MXP) y moneda extranjera(USD).
+	 * 
+	 * @param registros
+	 */
+	private void identificarTipoMonto(List<String> registros) {
+		for (String registro : registros) {
+			if (registro.contains("MXP")) {
+				String aux = registro.substring(40, 55);
+				Long par = Long.parseLong(aux);
+				sumatoriaMontoMXP.add(par);
+
+			} else if (registro.contains("USD")) {
+				String aux = registro.substring(40, 55);
+				Long par = Long.parseLong(aux);
+				sumatoriaMontoExt.add(par);
+			}
+		}
+	}
+
+	/**
+	 * Establece el montoTotal de moneda Nacional o Extranjera.
+	 * 
+	 * @param monto
+	 * @return
+	 */
+	private String establecerSumatoriaMonedaNacionalOExtranjera(Long monto) {
+
+		String montoCompleto = "";
+		String montoTotal = monto.toString();
+		Integer numeroCaracteresMonto = 16 - montoTotal.length();
+
+		for (int i = 0; i < numeroCaracteresMonto; i++) {
+			montoCompleto = montoCompleto.concat("0");
+		}
+		return montoCompleto.concat(montoTotal);
+	}
+
+	/**
+	 * Establece el numero de registros totales de ICE
+	 * 
+	 * @param totalRegistros
+	 */
+	private String establecerTotalRegistrosICE(Integer totalRegistros) {
+
+		String registrosCompletos = "";
+		String registros = totalRegistros.toString();
+		Integer numeroCaracteres = 5 - registros.length();
+
+		for (int i = 0; i < numeroCaracteres; i++) {
+			registrosCompletos = registrosCompletos.concat("0");
+		}
+
+		return registrosCompletos.concat(registros);
+	}
+
+	/**
+	 * Suma el monto de la lista que reciva por parametro.
+	 * 
+	 * @param montos
+	 * @return
+	 */
+	private Long sumaMonto(List<Long> montos) {
+
+		Long montoTotal = 0L;
+
+		for (Long monto : montos) {
+			montoTotal = montoTotal + monto;
+		}
+
+		return montoTotal;
+	}
 
 	/**
 	 * Metodo que crea un nuevo archivo de BKL.
@@ -216,25 +344,21 @@ public class LeerArchivo2 {
 	 * @param valor
 	 * @return true o false si creo el archivo
 	 */
-	private boolean crearArchivoBKL(String cabeceraFechaPago, Integer cabeceraTotalRegistrosBKL,
-			List<String> registrosBKL, String nombreArchivo) {
-		// Creara un nuevo archivo siempre y cuando el valor sea false.
-		if (auxNewFileBKL == false) {
-			try {
-				pw = new PrintWriter(nombreArchivo);// Se crea el archivo con el nombre que lleva como parametro.
-				System.out.println("Archivo BKL creado correctamente...");
-			} catch (Exception e) {
-				System.out.println("Error al crear el archivo: " + e.getMessage());
-			}
-			auxNewFileICE = true;
-		}
-		pw.close();
-		return true;
-	}
-
-	private void imprimirArchivoLeido() {
-		System.out.println(linea);
-	}
+//	private boolean crearArchivoBKL(String cabeceraFechaPago, Integer cabeceraTotalRegistrosBKL,
+//			List<String> registrosBKL, String nombreArchivo) {
+//		// Creara un nuevo archivo siempre y cuando el valor sea false.
+//		if (auxNewFileBKL == false) {
+//			try {
+//				pw = new PrintWriter(nombreArchivo);// Se crea el archivo con el nombre que lleva como parametro.
+//				System.out.println("Archivo BKL creado correctamente...");
+//			} catch (Exception e) {
+//				System.out.println("Error al crear el archivo: " + e.getMessage());
+//			}
+//			auxNewFileICE = true;
+//		}
+//		pw.close();
+//		return true;
+//	}
 
 	/**
 	 * Metodo principal de la aplicación.
