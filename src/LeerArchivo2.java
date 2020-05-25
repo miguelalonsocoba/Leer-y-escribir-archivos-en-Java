@@ -9,6 +9,31 @@ import java.io.IOException;
  *
  */
 public class LeerArchivo2 {
+	
+	/**
+	 * Variable de cabecera Importe Sumatoria Moneda USD del archivo que se lee.
+	 */
+	private String cabeceraImporteSumatoriaMonedaUSD;
+	
+	/**
+	 * Variable de cabecera Importe Sumatoria Moneda MXP del archivo que se lee.
+	 */
+	private String cabeceraImporteSumatoriaMonedaMXP;
+	
+	/**
+	 * Variable de cabecera de Total de Registro del archivo que se lee.
+	 */
+	private String cabeceraTotalRegistros;
+	
+	/**
+	 * Variable de cabecera Fecha Pago del archivo que se lee.
+	 */
+	private String cabeceraFechaPago;
+	
+	/**
+	 * Variable que sirve de auxiliar, cuando la variable cabeceraFechaPago tenga valor esta variable cambiara el valor a true.
+	 */
+	private Boolean auxCabeceraFechaPago = false;
 
 	/**
 	 * Variable que almacenara la ruta del nuevo archivo ICE creado
@@ -53,8 +78,30 @@ public class LeerArchivo2 {
 			
 			//Lee linea por linea del archivo...
 			while((linea = br.readLine()) != null) {
-				System.out.println(String.format("Linea leida: %s", linea));
-			}
+				System.out.println(linea);
+				
+				//Comprueba si la variable es false, si cumple asigna valores a las variables de cabecera siguientes, e imprime los valores de las variables.
+				if (auxCabeceraFechaPago == false) {
+					//Asigna el valor a cabeceraFechaPago.
+					cabeceraFechaPago = linea.substring(4, 12);
+					System.out.println("Cabecera Fecha Pago: " + cabeceraFechaPago);
+					
+					//Aseigna valor a cabeceraTotalRegistros.
+					cabeceraTotalRegistros = linea.substring(12, 17);
+					System.out.println("Cabecera Total Registros: " + cabeceraTotalRegistros);
+					
+					//Aseigna valor a cabeceraImporteSumatoriaMonedaMXP.
+					cabeceraImporteSumatoriaMonedaMXP = linea.substring(17, 33);
+					System.out.println("Cabecera Importe Sumatoria Moneda MXP: " + cabeceraImporteSumatoriaMonedaMXP);
+					
+					//Asigna valor a cabeceraImporteSumatoriaMonedaUSD.
+					cabeceraImporteSumatoriaMonedaUSD = linea.substring(37, 53);
+					System.out.println("Cabecera Importe Sumatoria Moneda USD: " + cabeceraImporteSumatoriaMonedaUSD);
+					
+					auxCabeceraFechaPago = true;
+				}
+				
+			}	
 			
 			//Se cierran los recursos que se utilizan.
 			br.close();
