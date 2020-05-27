@@ -6,12 +6,20 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class LeerArchivos.
  *
  */
-public class LeerArchivo2 {
+public class Separador {
+
+	private final static Logger LOGGER = Logger.getLogger("bitacora.subnivel.Separador");
+	/**
+	 * Almacenara el total de registros de ICE.
+	 */
+	private Integer totalRegistrosICE;
 
 	/**
 	 * Representa el monto total de moneda Extranjera.
@@ -127,28 +135,55 @@ public class LeerArchivo2 {
 	/**
 	 * Contrucor por defecto. Se inizializa la variable.
 	 */
-	public LeerArchivo2() {
-		lectureFile = new File("c:\\pruebaJava\\prueba2.txt");
+	public Separador() {
+		lectureFile = new File("C:\\pruebaJava\\prueba2.txt");
 	}
 
 	/**
 	 * Constructor que recive la ruta del archivo que se va a leer.
-	 * 
+	 *
 	 * @param ruta
 	 */
-	public LeerArchivo2(String ruta) {
+	public Separador(String ruta) {
 		lectureFile = new File(ruta);
 		registrosICE = new ArrayList<>();
 		registrosBKL = new ArrayList<>();
-		nombreArchivoNuevoICE = "c:/pruebaJava/Nuevo Archivo ICE.txt";
-		nombreArchivoNuevoBKL = "c:/pruebaJava/Nuevo Archivo BKL.txt";
+		nombreArchivoNuevoICE = "C:/pruebaJava/ICE.txt";
+		nombreArchivoNuevoBKL = "C:/pruebaJava/BKL.txt";
 		sumatoriaMontoMXP = new ArrayList<>();
 		sumatoriaMontoExt = new ArrayList<>();
 		montoTotalMXP = 0L;
 		montoTotalUSD = 0L;
+		totalRegistrosICE = 0;
 		auxCabeceraFechaPago = false;
 		auxNewFileICE = false;
 		auxNewFileBKL = false;
+		montoTotalNacional = null;
+		montoTotalExtranjero = null;
+	}
+
+	/**
+	 * Constructor que recive la ruta del archivo que se va a leer, se va guarda en
+	 * ICE y en BKL
+	 *
+	 * @param ruta, guardaArchivoICE, guardaArchivoBKL
+	 */
+	public Separador(String ruta, String guardaArchivoICE, String guardaArchivoBKL) {
+		lectureFile = new File(ruta);
+		registrosICE = new ArrayList<>();
+		registrosBKL = new ArrayList<>();
+		nombreArchivoNuevoICE = guardaArchivoICE;
+		nombreArchivoNuevoBKL = guardaArchivoBKL;
+		sumatoriaMontoMXP = new ArrayList<>();
+		sumatoriaMontoExt = new ArrayList<>();
+		montoTotalMXP = 0L;
+		montoTotalUSD = 0L;
+		totalRegistrosICE = 0;
+		auxCabeceraFechaPago = false;
+		auxNewFileICE = false;
+		auxNewFileBKL = false;
+		montoTotalNacional = null;
+		montoTotalExtranjero = null;
 	}
 
 	/**
@@ -159,37 +194,64 @@ public class LeerArchivo2 {
 			FileReader fr = new FileReader(lectureFile);
 			BufferedReader br = new BufferedReader(fr);
 
+			LOGGER.log(Level.INFO, "Inicia proceso de lectura archivo Proceso Separador ");
+
 			// Lee linea por linea del archivo...
 			while ((linea = br.readLine()) != null) {
 
-				// Comprueba si la variable es false, si cumple asigna valores a las variables
-				// de cabecera siguientes, e imprime los valores de las variables.
+// Comprueba si la variable es false, si cumple asigna valores a las variables
+// de cabecera siguientes, e imprime los valores de las variables.
 				if (auxCabeceraFechaPago == false) {
-					// Asigna el valor a cabeceraFechaPago.
+
+//validar que venga siempre 01
+
+// Asigna el valor a cabeceraFechaPago.
 					cabeceraFechaPago = linea.substring(4, 12);
+					LOGGER.log(Level.INFO, "Cabecera Fecha Pago: " + cabeceraFechaPago);
 					System.out.println("Cabecera Fecha Pago: " + cabeceraFechaPago);
 
-					// Aseigna valor a cabeceraTotalRegistros.
-					cabeceraTotalRegistros = linea.substring(12, 17);
+// Asigna valor a cabeceraTotalRegistros.
+					cabeceraTotalRegistros = linea.substring(12, 17);// MXP&USD
+					LOGGER.log(Level.INFO, "Cabecera Total Registros: " + cabeceraTotalRegistros);
 					System.out.println("Cabecera Total Registros: " + cabeceraTotalRegistros);
 
-					// Aseigna valor a cabeceraImporteSumatoriaMonedaMXP.
+// Aseigna valor a cabeceraImporteSumatoriaMonedaMXP.
 					cabeceraImporteSumatoriaMonedaMXP = linea.substring(17, 33);
+					LOGGER.log(Level.INFO,
+							"Cabecera Importe Sumatoria Moneda MXP: " + cabeceraImporteSumatoriaMonedaMXP);
 					System.out.println("Cabecera Importe Sumatoria Moneda MXP: " + cabeceraImporteSumatoriaMonedaMXP);
 
-					// Asigna valor a cabeceraImporteSumatoriaMonedaUSD.
+// Asigna valor a cabeceraImporteSumatoriaMonedaUSD.
 					cabeceraImporteSumatoriaMonedaUSD = linea.substring(37, 53);
+					LOGGER.log(Level.INFO,
+							"Cabecera Importe Sumatoria Moneda USD: " + cabeceraImporteSumatoriaMonedaUSD + "\n");
 					System.out.println(
 							"Cabecera Importe Sumatoria Moneda USD: " + cabeceraImporteSumatoriaMonedaUSD + "\n");
+
+//comparar moneda extranjera y moneda nacional
+
+//Validar que sea numerico los montos. 000000897650MXP
+
+//Hacer suma de registros MXP
+
+//Hacer suma de registros USD
+
+//Comparar la suma contra el monto de la lectura de la sumatoria inicial
 
 					auxCabeceraFechaPago = true;
 				}
 
+//validar que venga siempre venga 02
+
+//Validar que la longitud de moneda sea la correcta.
+
 				if (linea.contains(ICE)) {
+					LOGGER.log(Level.INFO, "Si contiene la linea la palabra ICE");
 					System.out.println("Si contiene la linea la palabra ICE");
 					registrosICE.add(linea);
 
 				} else if (linea.contains(BKL)) {
+					LOGGER.log(Level.INFO, "Si contiene la linea la palabra ICE");
 					System.out.println("Si contienen la linea la palabra BKL");
 					registrosBKL.add(linea);
 				}
@@ -197,19 +259,24 @@ public class LeerArchivo2 {
 				imprimirArchivoLeido();
 
 			}
-			// Se cierran los recursos que se utilizan.
+// Se cierran los recursos que se utilizan.
 			br.close();
 			fr.close();
 
+			LOGGER.log(Level.INFO, "Tamaño de registros de ICE: " + registrosICE.size());
 			System.out.println("Tamaño de registros de ICE: " + registrosICE.size());
+			LOGGER.log(Level.INFO, "Tamaño de registros de BKL: " + registrosBKL.size());
 			System.out.println("Tamaño de registros de BKL: " + registrosBKL.size());
 
 			crearArchivoICE(cabeceraFechaPago, registrosICE, nombreArchivoNuevoICE);
+			inicializarVariables();
 			crearArchivoBKL(cabeceraFechaPago, registrosBKL, nombreArchivoNuevoBKL);
 
 		} catch (FileNotFoundException e) {
+			LOGGER.log(Level.INFO, "El archivo no pudo ser leido... " + e.getMessage());
 			System.out.println("El archivo no pudo ser leido... " + e.getMessage());
 		} catch (IOException e) {
+			LOGGER.log(Level.INFO, "Ocurrió un error leyendo el archivo: " + e);
 			System.out.println("Ocurrió un error leyendo el archivo: " + e);
 		}
 	}
@@ -217,41 +284,57 @@ public class LeerArchivo2 {
 	/**
 	 * Imprime el archivo.
 	 */
-	private void imprimirArchivoLeido() {
+	public void imprimirArchivoLeido() {
+		LOGGER.log(Level.INFO, "linea");
 		System.out.println(linea);
 	}
 
 	/**
+	 * Metodo vacio crearArchivoICE.
+	 *
+	 */
+	public void crearArchivoICE() {
+		LOGGER.log(Level.INFO, "crearArchivoICE");
+	}
+
+	/**
 	 * Metodo que crea un nuevo archivo de ICE.
-	 * 
+	 *
 	 * @param valor
 	 * @return true o false si creo el archivo
 	 */
-	private boolean crearArchivoICE(String cabeceraFechaPago, List<String> registrosICE, String nombreArchivo) {
+	public boolean crearArchivoICE(String cabeceraFechaPago, List<String> registrosICE, String nombreArchivo) {
 
-		// Creara un nuevo archivo siempre y cuando el valor sea false.
-		if (Boolean.FALSE.equals(auxNewFileICE)) {
+// Creara un nuevo archivo siempre y cuando el valor sea false.
+		if (auxNewFileICE == false) {
 			try {
 				pw = new PrintWriter(nombreArchivo);// Se crea el archivo con el nombre que lleva como parametro.
 				identificarTipoMonto(registrosICE);
 				montoTotalMXP = sumaMonto(sumatoriaMontoMXP);
 				montoTotalUSD = sumaMonto(sumatoriaMontoExt);
 				String registroTotalesICE = establecerTotalRegistrosICE(registrosICE.size());
-				String montoTotalNacional = establecerSumatoriaMonedaNacionalOExtranjera(montoTotalMXP);
-				String montoTotalExtranjero = establecerSumatoriaMonedaNacionalOExtranjera(montoTotalUSD);
+				String montoTotalNacional = establecerSumatoriaMonedaNacional(montoTotalMXP);
+				String montoTotalExtranjero = establecerSumatoriaMonedaExtranjera(montoTotalUSD);
 
+				LOGGER.log(Level.INFO, "Registros totales de ICE ......" + registroTotalesICE);
 				System.out.println("Registros totales de ICE ......" + registroTotalesICE);
+
+				LOGGER.log(Level.INFO, "Monto Total Nacional: " + montoTotalNacional);
 				System.out.println("Monto Total Nacional: " + montoTotalNacional);
+
+				LOGGER.log(Level.INFO, "Monto Total Extranjero: " + montoTotalExtranjero);
 				System.out.println("Monto Total Extranjero: " + montoTotalExtranjero);
 
-				pw.write("01".concat("   ").concat(cabeceraFechaPago).concat(registroTotalesICE)
+				pw.write("01".concat("  ").concat(cabeceraFechaPago).concat(registroTotalesICE)
 						.concat(montoTotalNacional).concat("MXP").concat(montoTotalExtranjero).concat("USD\n"));
 				for (String registro : registrosICE) {
 					pw.write(registro + "\n");
 				}
+				LOGGER.log(Level.INFO, "Archivo ICE creado correctamente...");
 				System.out.println("Archivo ICE creado correctamente...");
 			} catch (Exception e) {
-				System.out.println("Error al crear el archivo: " + e.getMessage());
+				LOGGER.log(Level.INFO, "Error al crear el archivo ICE: " + e.getMessage());
+				System.out.println("Error al crear el archivo ICE: " + e.getMessage());
 			}
 			auxNewFileICE = true;
 		}
@@ -260,9 +343,77 @@ public class LeerArchivo2 {
 	}
 
 	/**
+	 * Metodo vacio crearArchivoBK.
+	 *
+	 */
+	public void crearArchivoBKL() {
+		LOGGER.log(Level.INFO, "crearArchivoBKL");
+	}
+
+	/**
+	 * Metodo que crea un nuevo archivo de BKL.
+	 *
+	 * @param valor
+	 * @return true o false si creo el archivo
+	 */
+	String montoTotalNacional;
+	String montoTotalExtranjero;
+
+	public boolean crearArchivoBKL(String cabeceraFechaPago, List<String> registrosBKL, String nombreArchivo) {
+// Creara un nuevo archivo siempre y cuando el valor sea false.
+		if (auxNewFileBKL == false) {
+			try {
+				pw = new PrintWriter(nombreArchivo);// Se crea el archivo con el nombre que lleva como parametro.
+				identificarTipoMonto(registrosBKL);
+				montoTotalMXP = sumaMonto(sumatoriaMontoMXP);
+				montoTotalUSD = sumaMonto(sumatoriaMontoExt);
+				String registroTotalesBKL = establecerTotalRegistrosICE(registrosBKL.size());
+				montoTotalNacional = establecerSumatoriaMonedaNacional(montoTotalMXP);
+				montoTotalExtranjero = establecerSumatoriaMonedaExtranjera(montoTotalUSD);
+
+				LOGGER.log(Level.INFO, "Registros totales de BKL ......" + registroTotalesBKL);
+				System.out.println("Registros totales de BKL ......" + registroTotalesBKL);
+
+				LOGGER.log(Level.INFO, "Monto Total Nacional: " + montoTotalNacional);
+				System.out.println("Monto Total Nacional: " + montoTotalNacional);
+
+				LOGGER.log(Level.INFO, "Monto Total Extranjero: " + montoTotalExtranjero);
+				System.out.println("Monto Total Extranjero: " + montoTotalExtranjero);
+
+				pw.write("01".concat("  ").concat(cabeceraFechaPago).concat(registroTotalesBKL)
+						.concat(montoTotalNacional).concat("MXP").concat(montoTotalExtranjero).concat("USD\n"));
+				for (String registro : registrosBKL) {
+					pw.write(registro + "\n");
+				}
+				LOGGER.log(Level.INFO, "Archivo BKL creado correctamente...");
+				System.out.println("Archivo BKL creado correctamente...");
+			} catch (Exception e) {
+				LOGGER.log(Level.INFO, "Error al crear el archivo BKL: " + e.getMessage());
+				System.out.println("Error al crear el archivo BKL: " + e.getMessage());
+			}
+			auxNewFileBKL = true;
+		}
+		pw.close();
+		return true;
+	}
+
+	/**
+	 * Metodo para setear las variables al crear el nuevo archivo BKL
+	 */
+	private void inicializarVariables() {
+		totalRegistrosICE = 0;
+		montoTotalNacional = null;
+		montoTotalExtranjero = null;
+		montoTotalMXP = null;
+		montoTotalUSD = null;
+		sumatoriaMontoMXP = new ArrayList<>();
+		sumatoriaMontoExt = new ArrayList<>();
+	}
+
+	/**
 	 * Identifica el tipo de monto entre moneda Nacional(MXP) y moneda
 	 * extranjera(USD).
-	 * 
+	 *
 	 * @param registros
 	 */
 	private void identificarTipoMonto(List<String> registros) {
@@ -282,15 +433,32 @@ public class LeerArchivo2 {
 
 	/**
 	 * Establece el montoTotal de moneda Nacional o Extranjera.
-	 * 
+	 *
 	 * @param monto
 	 * @return
 	 */
-	private String establecerSumatoriaMonedaNacionalOExtranjera(Long monto) {
-
+	private String establecerSumatoriaMonedaExtranjera(Long monto) {
 		String montoCompleto = "";
 		String montoTotal = monto.toString();
-		Integer numeroCaracteresMonto = 16 - montoTotal.length();
+		Integer numeroCaracteresMonto = 20 - montoTotal.length();
+
+		for (int i = 0; i < numeroCaracteresMonto; i++) {
+			montoCompleto = montoCompleto.concat("0");
+		}
+		return montoCompleto.concat(montoTotal);
+	}
+
+	/**
+	 * Establece el montoTotal de moneda Nacional o Extranjera.
+	 *
+	 * @param monto
+	 * @return
+	 */
+	private String establecerSumatoriaMonedaNacional(Long monto) {
+		String montoCompleto = "";
+		String montoTotal = monto.toString();
+
+		Integer numeroCaracteresMonto = 15 - montoTotal.length();
 
 		for (int i = 0; i < numeroCaracteresMonto; i++) {
 			montoCompleto = montoCompleto.concat("0");
@@ -300,7 +468,7 @@ public class LeerArchivo2 {
 
 	/**
 	 * Establece el numero de registros totales de ICE
-	 * 
+	 *
 	 * @param totalRegistros
 	 */
 	private String establecerTotalRegistrosICE(Integer totalRegistros) {
@@ -318,7 +486,7 @@ public class LeerArchivo2 {
 
 	/**
 	 * Suma el monto de la lista que reciva por parametro.
-	 * 
+	 *
 	 * @param montos
 	 * @return
 	 */
@@ -334,38 +502,19 @@ public class LeerArchivo2 {
 	}
 
 	/**
-	 * Metodo que crea un nuevo archivo de BKL.
-	 * 
-	 * @param valor
-	 * @return true o false si creo el archivo
-	 */
-	private boolean crearArchivoBKL(String cabeceraFechaPago, List<String> registrosBKL, String nombreArchivo) {
-		// Creara un nuevo archivo siempre y cuando el valor sea false.
-		if (Boolean.FALSE.equals(auxNewFileBKL)) {
-			try {
-				pw = new PrintWriter(nombreArchivo);// Se crea el archivo con el nombre que lleva como parametro.
-				identificarTipoMonto(registrosBKL);
-				
-				System.out.println("Archivo BKL creado correctamente...");
-			} catch (Exception e) {
-				System.out.println("Error al crear el archivo: " + e.getMessage());
-			}
-			auxNewFileICE = true;
-		}
-		pw.close();
-		return true;
-	}
-
-	/**
 	 * Metodo principal de la aplicación.
-	 * 
+	 *
 	 * @param mac
 	 */
-	public static void main(String... mac) {
+	public static void main(String... separador) {
 		// Se utiliza el constructor con parametro.
-		LeerArchivo2 object = new LeerArchivo2("c:\\pruebaJava\\prueba2.txt");
+		Separador object = new Separador("c:\\pruebaJava\\prueba2.txt");
 
+//Lectura del archivo txt
 		object.readFile();
+//
+//		Bitacora bitacora = new Bitacora();
+//		bitacora.main(separador);
 	}
 
 }
