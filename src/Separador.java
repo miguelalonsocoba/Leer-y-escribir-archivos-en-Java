@@ -16,6 +16,18 @@ import java.util.logging.Logger;
 public class Separador {
 
 	private final static Logger LOGGER = Logger.getLogger("bitacora.subnivel.Separador");
+
+	/**
+	 * Representa del archivo original la parte de la cabecera donde se encuentra el
+	 * 01.
+	 */
+	private static final String CABECERAPARTE1 = "01";
+
+	/**
+	 * Representa del archivo original la parte del cuerpo donde se encuetnra el 02.
+	 */
+	private static final String CUERPOPARTE02 = "02";
+
 	/**
 	 * Almacenara el total de registros de ICE.
 	 */
@@ -190,6 +202,8 @@ public class Separador {
 	 * Metodo que lee un archivo.
 	 */
 	public void readFile() {
+
+		Integer auxiliar = 0;// Lleva el control de las vueltas del while.
 		try {
 			FileReader fr = new FileReader(lectureFile);
 			BufferedReader br = new BufferedReader(fr);
@@ -199,29 +213,32 @@ public class Separador {
 			// Lee linea por linea del archivo...
 			while ((linea = br.readLine()) != null) {
 
-// Comprueba si la variable es false, si cumple asigna valores a las variables
-// de cabecera siguientes, e imprime los valores de las variables.
+				auxiliar++;
+
+				// Comprueba si la variable es false, si cumple asigna valores a las variables
+				// de cabecera siguientes, e imprime los valores de las variables.
 				if (auxCabeceraFechaPago == false) {
 
-//validar que venga siempre 01
+					// validar que venga siempre 01 en la cabecera del archivo origina.
+					validar01And02(linea, auxiliar);
 
-// Asigna el valor a cabeceraFechaPago.
+					// Asigna el valor a cabeceraFechaPago.
 					cabeceraFechaPago = linea.substring(4, 12);
 					LOGGER.log(Level.INFO, "Cabecera Fecha Pago: " + cabeceraFechaPago);
 					System.out.println("Cabecera Fecha Pago: " + cabeceraFechaPago);
 
-// Asigna valor a cabeceraTotalRegistros.
+					// Asigna valor a cabeceraTotalRegistros.
 					cabeceraTotalRegistros = linea.substring(12, 17);// MXP&USD
 					LOGGER.log(Level.INFO, "Cabecera Total Registros: " + cabeceraTotalRegistros);
 					System.out.println("Cabecera Total Registros: " + cabeceraTotalRegistros);
 
-// Aseigna valor a cabeceraImporteSumatoriaMonedaMXP.
+					// Aseigna valor a cabeceraImporteSumatoriaMonedaMXP.
 					cabeceraImporteSumatoriaMonedaMXP = linea.substring(17, 33);
 					LOGGER.log(Level.INFO,
 							"Cabecera Importe Sumatoria Moneda MXP: " + cabeceraImporteSumatoriaMonedaMXP);
 					System.out.println("Cabecera Importe Sumatoria Moneda MXP: " + cabeceraImporteSumatoriaMonedaMXP);
 
-// Asigna valor a cabeceraImporteSumatoriaMonedaUSD.
+					// Asigna valor a cabeceraImporteSumatoriaMonedaUSD.
 					cabeceraImporteSumatoriaMonedaUSD = linea.substring(37, 53);
 					LOGGER.log(Level.INFO,
 							"Cabecera Importe Sumatoria Moneda USD: " + cabeceraImporteSumatoriaMonedaUSD + "\n");
@@ -241,7 +258,8 @@ public class Separador {
 					auxCabeceraFechaPago = true;
 				}
 
-//validar que venga siempre venga 02
+				// validar que venga siempre venga 02
+				validar01And02(linea, auxiliar);
 
 //Validar que la longitud de moneda sea la correcta.
 
@@ -278,7 +296,29 @@ public class Separador {
 		} catch (IOException e) {
 			LOGGER.log(Level.INFO, "Ocurrió un error leyendo el archivo: " + e);
 			System.out.println("Ocurrió un error leyendo el archivo: " + e);
+		} catch (Exception e) {
+			LOGGER.warning(e.getMessage());
 		}
+	}
+
+	/**
+	 * Metodo que valida que la cabecera del archivo original contenga los digitos
+	 * de "01".
+	 * 
+	 * @param cabecera
+	 * @return boolean
+	 * @throws Exception
+	 */
+	private void validar01And02(String valor, Integer numLinea) throws Excepciones {
+
+		String subValor = valor.substring(0, 2);
+		LOGGER.info(String.format("Valor del sub string: %s", subValor));
+		if (numLinea.equals(1) && !subValor.contains(CABECERAPARTE1)) {
+			throw new Excepciones("Error... En la cabecera del archivo no se encuentra los digitos " + CABECERAPARTE1);
+		} else if (numLinea > 1 && !subValor.contains(CUERPOPARTE02)) {
+			throw new Excepciones("Error... En el cuerpo del archivo no se encuentra los digitos " + CUERPOPARTE02);
+		}
+
 	}
 
 	/**
