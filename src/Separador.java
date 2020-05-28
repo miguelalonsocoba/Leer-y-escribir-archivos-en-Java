@@ -18,6 +18,16 @@ public class Separador {
 	private final static Logger LOGGER = Logger.getLogger("bitacora.subnivel.Separador");
 
 	/**
+	 * Almacena los montos de moneda Nacional del archivo original.
+	 */
+	private List<Long> montosMXPArchivoOriginal;
+
+	/**
+	 * Almacena los montos de moneda Extranjera del archivo original.
+	 */
+	private List<Long> montosUSDArchivoOriginal;
+
+	/**
 	 * Representa del archivo original la parte de la cabecera donde se encuentra el
 	 * 01.
 	 */
@@ -27,6 +37,16 @@ public class Separador {
 	 * Representa del archivo original la parte del cuerpo donde se encuetnra el 02.
 	 */
 	private static final String CUERPOPARTE02 = "02";
+
+	/**
+	 * Representa el tipo de moneda Extranjera.
+	 */
+	private static final String TIPOMONEDAUSD = "USD";
+
+	/**
+	 * Representa el tipo de moneda Nacional.
+	 */
+	private static final String TIPOMONEDAMXP = "MXP";
 
 	/**
 	 * Almacenara el total de registros de ICE.
@@ -143,16 +163,21 @@ public class Separador {
 	 * Variable que almacenara linea por linea del archivo leido.
 	 */
 	private String linea;
-	
+
 	/**
 	 * Representa el monto Total Nacional.
 	 */
 	private String montoTotalNacional;
-	
+
 	/**
 	 * Representa el monto Total Extranjero.
 	 */
 	private String montoTotalExtranjero;
+
+	/**
+	 * Lleva el registro de cuantas lineas hay en el archivo original
+	 */
+	private Integer contadorLineas;
 
 	/**
 	 * Contrucor por defecto. Se inizializa la variable.
@@ -182,6 +207,9 @@ public class Separador {
 		auxNewFileBKL = false;
 		montoTotalNacional = null;
 		montoTotalExtranjero = null;
+		contadorLineas = 0;
+		montosMXPArchivoOriginal = new ArrayList<>();
+		montosUSDArchivoOriginal = new ArrayList<>();
 	}
 
 	/**
@@ -213,7 +241,6 @@ public class Separador {
 	 */
 	public void readFile() {
 
-		Integer auxiliar = 0;// Lleva el control de las vueltas del while.
 		try {
 			FileReader fr = new FileReader(lectureFile);
 			BufferedReader br = new BufferedReader(fr);
@@ -223,14 +250,14 @@ public class Separador {
 			// Lee linea por linea del archivo...
 			while ((linea = br.readLine()) != null) {
 
-				auxiliar++;
+				contadorLineas++;
 
 				// Comprueba si la variable es false, si cumple asigna valores a las variables
 				// de cabecera siguientes, e imprime los valores de las variables.
 				if (auxCabeceraFechaPago == false) {
 
 					// validar que venga siempre 01 en la cabecera del archivo origina.
-					validar01And02(linea, auxiliar);
+					validar01And02(linea, contadorLineas);
 
 					// Asigna el valor a cabeceraFechaPago.
 					cabeceraFechaPago = linea.substring(4, 12);
@@ -243,13 +270,13 @@ public class Separador {
 					System.out.println("Cabecera Total Registros: " + cabeceraTotalRegistros);
 
 					// Aseigna valor a cabeceraImporteSumatoriaMonedaMXP.
-					cabeceraImporteSumatoriaMonedaMXP = linea.substring(17, 33);
+					cabeceraImporteSumatoriaMonedaMXP = linea.substring(17, 32);
 					LOGGER.log(Level.INFO,
 							"Cabecera Importe Sumatoria Moneda MXP: " + cabeceraImporteSumatoriaMonedaMXP);
 					System.out.println("Cabecera Importe Sumatoria Moneda MXP: " + cabeceraImporteSumatoriaMonedaMXP);
 
 					// Asigna valor a cabeceraImporteSumatoriaMonedaUSD.
-					cabeceraImporteSumatoriaMonedaUSD = linea.substring(37, 53);
+					cabeceraImporteSumatoriaMonedaUSD = linea.substring(40, 55);
 					LOGGER.log(Level.INFO,
 							"Cabecera Importe Sumatoria Moneda USD: " + cabeceraImporteSumatoriaMonedaUSD + "\n");
 					System.out.println(
@@ -259,8 +286,6 @@ public class Separador {
 
 //Validar que sea numerico los montos. 000000897650MXP
 
-//Hacer suma de registros MXP
-
 //Hacer suma de registros USD
 
 //Comparar la suma contra el monto de la lectura de la sumatoria inicial
@@ -269,7 +294,7 @@ public class Separador {
 				}
 
 				// validar que venga siempre 01 y 02 en cabecera y cuerpo.
-				validar01And02(linea, auxiliar);
+				validar01And02(linea, contadorLineas);
 
 //Validar que la longitud de moneda sea la correcta.
 
@@ -284,10 +309,17 @@ public class Separador {
 
 				imprimirArchivoLeido();
 
+				// Hacer suma de registros MXP
+				sumaMontosMXPAndUSDDetalle(linea, contadorLineas);
+
 			}
 			// Se cierran los recursos que se utilizan.
 			fr.close();
 			br.close();
+
+			// Comparar monto de cabecera del archivo original con la suma resultante de los
+			// montos tanto de USD y MXP.
+			compararMontoCabeceraYMontosDetalle();
 
 			LOGGER.log(Level.INFO, "Tamaño de registros de ICE: " + registrosICE.size());
 			LOGGER.log(Level.INFO, "Tamaño de registros de BKL: " + registrosBKL.size());
@@ -305,8 +337,64 @@ public class Separador {
 	}
 
 	/**
-	 * Metodo que valida que la cabecera y el cuerpo del archivo original contenga los digitos
-	 * de "01" y "02" respectivamente.
+	 * Compara que el montos USD y MXP de la cabecera del archivo original sea igual
+	 * a la suma de los montos de su detalle.
+	 */
+	private void compararMontoCabeceraYMontosDetalle() throws Excepciones {
+		Long montoTotalMXPDetalle = 0L;
+		Long montoTotalUSDDetalle = 0L;
+		try {
+			for (Long long1 : montosMXPArchivoOriginal) {
+				montoTotalMXPDetalle = montoTotalMXPDetalle + long1;
+			}
+			if (!montoTotalMXPDetalle.equals(Long.parseLong(cabeceraImporteSumatoriaMonedaMXP))) {
+				throw new Excepciones(
+						"Error... El monto MXP de la cabecera del archivo original no es igual a la suma de los montos de su detalle");
+			}
+
+			for (Long long1 : montosUSDArchivoOriginal) {
+				montoTotalUSDDetalle = montoTotalUSDDetalle + long1;
+			}
+			if (!montoTotalUSDDetalle.equals(Long.parseLong(cabeceraImporteSumatoriaMonedaUSD))) {
+				throw new Excepciones(
+						"Error... El monto USD de la cabecera del archivo original no es igual a la suma de los montos de su detalle");
+			}
+		} catch (NumberFormatException e) {
+			throw new Excepciones("Error... Los montos de la cabecera del archivo original no cumplen con el formato especifico");
+		}
+
+	}
+
+	/**
+	 * Suma los montos de MXP y USD, de igual forma revisa si el formato de los
+	 * montos es valido.
+	 * 
+	 * @param valorLinea
+	 * @param numeroLinea
+	 * @throws Excepciones
+	 */
+	private void sumaMontosMXPAndUSDDetalle(String valorLinea, Integer numeroLinea) throws Excepciones {
+		try {
+			if (numeroLinea > 1) {
+				if (valorLinea.contains(TIPOMONEDAMXP)) {
+					Long valorMXP;
+					valorMXP = Long.parseLong(valorLinea.substring(40, 55));
+					montosMXPArchivoOriginal.add(valorMXP);
+				} else if (valorLinea.contains(TIPOMONEDAUSD)) {
+					Long valorUSD;
+					valorUSD = Long.parseLong(valorLinea.substring(40, 55));
+					montosUSDArchivoOriginal.add(valorUSD);
+				}
+			}
+		} catch (NumberFormatException e) {
+			throw new Excepciones(String.format("Error... El monto contiene un formato invalido en la linea numero %s",
+					contadorLineas));
+		}
+	}
+
+	/**
+	 * Metodo que valida que la cabecera y el cuerpo del archivo original contenga
+	 * los digitos de "01" y "02" respectivamente.
 	 * 
 	 * @param cabecera
 	 * @return boolean
@@ -319,7 +407,8 @@ public class Separador {
 		if (numLinea.equals(1) && !subValor.contains(CABECERAPARTE1)) {
 			throw new Excepciones("Error... En la cabecera del archivo no se encuentra los digitos " + CABECERAPARTE1);
 		} else if (numLinea > 1 && !subValor.contains(CUERPOPARTE02)) {
-			throw new Excepciones("Error... En el cuerpo del archivo no se encuentra los digitos " + CUERPOPARTE02);
+			throw new Excepciones("Error... En el cuerpo del archivo no se encuentra los digitos " + CUERPOPARTE02
+					+ " en la linea número " + contadorLineas);
 		}
 
 	}
