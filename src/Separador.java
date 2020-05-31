@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,6 +17,11 @@ import java.util.logging.Logger;
 public class Separador {
 
 	private final static Logger LOGGER = Logger.getLogger("bitacora.subnivel.Separador");
+	
+	/**
+	 * Almacena la ruta del archivio que sera leido.
+	 */
+	private String rutaLeerArchivo;
 
 	/**
 	 * Almacena los montos de moneda Nacional del archivo original.
@@ -47,11 +53,6 @@ public class Separador {
 	 * Representa el tipo de moneda Nacional.
 	 */
 	private static final String TIPOMONEDAMXP = "MXP";
-
-	/**
-	 * Almacenara el total de registros de ICE.
-	 */
-	private Integer totalRegistrosICE;
 
 	/**
 	 * Representa el monto total de moneda Extranjera.
@@ -101,12 +102,12 @@ public class Separador {
 	/**
 	 * Constante.
 	 */
-	private final String ICE = "ICE";
+	private static final String ICE = "ICE";
 
 	/**
 	 * Costante.
 	 */
-	private final String BKL = "BKL";
+	private static final String BKL = "BKL";
 
 	/**
 	 * Variable de cabecera Importe Sumatoria Moneda USD del archivo que se lee.
@@ -119,16 +120,6 @@ public class Separador {
 	private String cabeceraImporteSumatoriaMonedaMXP;
 
 	/**
-	 * Variable de cabecera de Total de Registros MXP.
-	 */
-	private String cabeceraTotalRegistrosMXP;
-
-	/**
-	 * Variable de cabecera de Total de Registros USD.
-	 */
-	private String cabeceraTotalRegistrosUSD;
-
-	/**
 	 * Variable de cabecera Fecha Pago del archivo que se lee.
 	 */
 	private String cabeceraFechaPago;
@@ -139,10 +130,6 @@ public class Separador {
 	 */
 	private Boolean auxCabeceraFechaPago;
 
-	/**
-	 * Variable que almacenara la ruta del nuevo archivo ICE creado
-	 */
-	private String newFileICE;
 
 	/**
 	 * Variable que al crearse el nuevo archivo newFileIce cambiara el valor a true.
@@ -150,24 +137,9 @@ public class Separador {
 	private Boolean auxNewFileICE;
 
 	/**
-	 * Variable que almacenara la ruta del nuevo archivo creado del segundo sistema.
-	 */
-	private String newFileBKL;
-
-	/**
 	 * Variable que al crearse el nuevo archivo newFileBKL cambiara el valor a true.
 	 */
 	private Boolean auxNewFileBKL;
-
-	/**
-	 * Variable que almacenara la ruta del archivo que se va a leer.
-	 */
-	private File lectureFile;
-
-	/**
-	 * Variable que almacenara linea por linea del archivo leido.
-	 */
-	private String linea;
 
 	/**
 	 * Representa el monto Total Nacional.
@@ -198,7 +170,25 @@ public class Separador {
 	 * Contrucor por defecto. Se inizializa la variable.
 	 */
 	public Separador() {
-		lectureFile = new File("C:\\pruebaJava\\prueba2.txt");
+		rutaLeerArchivo = null;
+		registrosICE = new ArrayList<>();
+		registrosBKL = new ArrayList<>();
+		nombreArchivoNuevoICE = null;
+		nombreArchivoNuevoBKL = null;
+		sumatoriaMontoMXP = new ArrayList<>();
+		sumatoriaMontoExt = new ArrayList<>();
+		montoTotalMXP = 0L;
+		montoTotalUSD = 0L;
+		auxCabeceraFechaPago = false;
+		auxNewFileICE = false;
+		auxNewFileBKL = false;
+		montoTotalNacional = null;
+		montoTotalExtranjero = null;
+		contadorLineas = 0;
+		montosMXPArchivoOriginal = new ArrayList<>();
+		montosUSDArchivoOriginal = new ArrayList<>();
+		contadorRegistrosMXP = 0;
+		contadorRegistrosUSD = 0;
 	}
 
 	/**
@@ -207,7 +197,7 @@ public class Separador {
 	 * @param ruta
 	 */
 	public Separador(String ruta) {
-		lectureFile = new File(ruta);
+		rutaLeerArchivo = null;
 		registrosICE = new ArrayList<>();
 		registrosBKL = new ArrayList<>();
 		nombreArchivoNuevoICE = "C:/pruebaJava/ICE.txt";
@@ -216,7 +206,6 @@ public class Separador {
 		sumatoriaMontoExt = new ArrayList<>();
 		montoTotalMXP = 0L;
 		montoTotalUSD = 0L;
-		totalRegistrosICE = 0;
 		auxCabeceraFechaPago = false;
 		auxNewFileICE = false;
 		auxNewFileBKL = false;
@@ -236,7 +225,6 @@ public class Separador {
 	 * @param ruta, guardaArchivoICE, guardaArchivoBKL
 	 */
 	public Separador(String ruta, String guardaArchivoICE, String guardaArchivoBKL) {
-		lectureFile = new File(ruta);
 		registrosICE = new ArrayList<>();
 		registrosBKL = new ArrayList<>();
 		nombreArchivoNuevoICE = "C:/pruebaJava/ICE.txt";
@@ -245,7 +233,6 @@ public class Separador {
 		sumatoriaMontoExt = new ArrayList<>();
 		montoTotalMXP = 0L;
 		montoTotalUSD = 0L;
-		totalRegistrosICE = 0;
 		auxCabeceraFechaPago = false;
 		auxNewFileICE = false;
 		auxNewFileBKL = false;
@@ -264,8 +251,13 @@ public class Separador {
 	public void readFile() {
 
 		try {
-			FileReader fr = new FileReader(lectureFile);
+			FileReader fr = new FileReader(rutaLeerArchivo);
 			BufferedReader br = new BufferedReader(fr);
+			
+			/**
+			 * Variable que almacenara linea por linea del archivo leido.
+			 */
+			String linea;
 
 			LOGGER.log(Level.INFO, "Inicia proceso de lectura archivo Proceso Separador ");
 
@@ -285,16 +277,10 @@ public class Separador {
 					cabeceraFechaPago = linea.substring(4, 12);
 					LOGGER.log(Level.INFO, "Cabecera Fecha Pago: " + cabeceraFechaPago);
 
-					cabeceraTotalRegistrosMXP = linea.substring(12, 17);// MXP
-					LOGGER.log(Level.INFO, "Cabecera Total RegistrosMXP: " + cabeceraTotalRegistrosMXP);
-
 // Asigna valor a cabeceraImporteSumatoriaMonedaMXP.
 					cabeceraImporteSumatoriaMonedaMXP = linea.substring(17, 32);
 					LOGGER.log(Level.INFO,
 							"Cabecera Importe Sumatoria Moneda MXP: " + cabeceraImporteSumatoriaMonedaMXP);
-
-					cabeceraTotalRegistrosUSD = linea.substring(35, 40);// USD
-					LOGGER.log(Level.INFO, "Cabecera Total RegistrosUSD: " + cabeceraTotalRegistrosUSD);
 
 // Asigna valor a cabeceraImporteSumatoriaMonedaUSD.
 					cabeceraImporteSumatoriaMonedaUSD = linea.substring(40, 55);
@@ -519,7 +505,6 @@ public class Separador {
 	 * Metodo para settear las variables al crear el nuevo archivo BKL
 	 */
 	private void inicializarVariables() {
-		totalRegistrosICE = 0;
 		montoTotalNacional = null;
 		montoTotalExtranjero = null;
 		montoTotalMXP = null;
@@ -648,17 +633,42 @@ public class Separador {
 			System.out.println("El registro es USD");
 		}
 	}
+	
+	/**
+	 * Metodo que lee las variables de configuracion del archivo properties.
+	 * @throws Excepciones 
+	 */
+	private void leerArchivoProperties() throws Excepciones {
+		Properties properties = new Properties();
+		try {
+			properties.load(new FileReader("c:/pruebaJava/variables.properties"));
+			rutaLeerArchivo = properties.getProperty("rutaLeerArchivo");
+			nombreArchivoNuevoICE = properties.getProperty("nombreArchivoNuevoICE");
+			nombreArchivoNuevoBKL = properties.getProperty("nombreArchivoNuevoBKL");
+			if (nombreArchivoNuevoBKL == null || nombreArchivoNuevoICE == null) {
+				throw new Excepciones("Error... El parametro no existe en el archivo de configuraciones... ");
+			}
+		} catch (IOException e) {
+			throw new Excepciones("Error al leer el archvivo de configuraciones... " + e.getMessage());
+		}
+	}
 
 	/**
 	 * Metodo principal de la aplicación.
 	 *
 	 * @param mac
+	 * @throws Excepciones 
 	 */
 	public static void main(String... separador) {
-// Se utiliza el constructor con parametro.
-		Separador object = new Separador("c:\\pruebaJava\\prueba2.txt");
-
-//Lectura del archivo txt
-		object.readFile();
+		
+		try {
+			Separador object = new Separador();
+			object.leerArchivoProperties();
+			//Lectura del archivo txt
+			object.readFile();
+		} catch (Exception e) {
+			LOGGER.warning("Error al leer el archivo de properties... " + e.getMessage());
+		}
+		
 	}
 }
